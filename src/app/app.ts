@@ -1,7 +1,10 @@
-import { Component, computed, OnInit, Signal, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, Signal, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ProductCard } from './product/product-card';
 import { Product } from './product/product';
+import { CatalogService } from './catalog/catalog-service';
+import { BasketService } from './basket/basket-service';
+import { APP_TITLE } from './app.token';
 
 @Component({
   selector: 'app-root',
@@ -11,71 +14,32 @@ import { Product } from './product/product';
 })
 export class App {
   isHovered = false;
-  protected readonly title = 'Zenika Shop'; //signal('zenika-ng-website');
-  total = signal(0);
-  cartItems = signal(0);
+  catalogService = inject(CatalogService);
+  basketService = inject(BasketService);
+  appTitle = inject(APP_TITLE);
 
   toggleIsHovered(): void {
     this.isHovered = !this.isHovered;
   }
 
-  updateTotal(product: Product) {
-    this.total.update((price) => price + product.price);
-    this.cartItems.update((nbItemsInCart) => ++nbItemsInCart);
-
-    this.products.update((products: Product[]) => {
-      return products.map((currentProduct: Product) => {
-        if (currentProduct.id === product.id) {
-          return { ...product, stock: product.stock - 1 } as Product;
-        } else {
-          return currentProduct;
-        }
-      });
-    });
+  get products() {
+    return this.catalogService.products();
   }
 
-  hasProductsInStock = computed(() => this.products().some((product) => product.stock > 0));
+  get total() {
+    return this.basketService.total();
+  }
 
-  // get hasProductsInStock(): Signal<boolean> {
-  //   return computed(() => this.products().some((product) => product.stock > 0));
-  // }
+  get count() {
+    return this.basketService.count();
+  }
 
-  products = signal<Product[]>([
-    {
-      id: 'welsch',
-      title: 'Coding the welsch',
-      description: 'Tee-shirt col rond - Homme',
-      photo: '/assets/coding-the-welsch.jpg',
-      price: 20,
-      stock: 2,
-    },
-    {
-      id: 'world',
-      title: 'Coding the world',
-      description: 'Tee-shirt col rond - Homme',
-      photo: '/assets/coding-the-world.jpg',
-      price: 18,
-      stock: 1,
-    },
-    {
-      id: 'vador',
-      title: 'Duck Vador',
-      description: 'Tee-shirt col rond - Femme',
-      photo: '/assets/coding-the-stars.jpg',
-      price: 21,
-      stock: 2,
-    },
-    {
-      id: 'snow',
-      title: 'Coding the snow',
-      description: 'Tee-shirt col rond - Femme',
-      photo: '/assets/coding-the-snow.jpg',
-      price: 19,
-      stock: 2,
-    },
-  ]);
-  
-  public toogleIsHovered(): void {
-    this.isHovered = !this.isHovered;
+  updateTotal(product: Product) {
+    this.basketService.addItem(product);
+    this.catalogService.decreaseStock(product.id);
+  }
+
+  hasProductsInStock(): Signal<boolean> {
+    return this.catalogService.hasProductsInStock;
   }
 }
