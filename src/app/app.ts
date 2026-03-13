@@ -1,14 +1,13 @@
-import { Component, computed, inject, OnInit, Signal, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject, Signal } from '@angular/core';
 import { ProductCard } from './product/product-card';
-import { Product } from './product/product';
-import { CatalogService } from './catalog/catalog-service';
-import { BasketService } from './basket/basket-service';
+import { CatalogService } from './catalog/catalog.service';
+import { BasketService } from './basket/basket.service';
 import { APP_TITLE } from './app.token';
+import { CurrencyPipe } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [ProductCard],
+  imports: [ProductCard, CurrencyPipe],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -22,9 +21,16 @@ export class App {
     this.isHovered = !this.isHovered;
   }
 
-  get products() {
-    return this.catalogService.products();
+  products = this.catalogService.products;
+
+  constructor() {
+    this.catalogService.fetchProducts().subscribe();
   }
+
+  // products() {
+    //return this.catalogService.products();
+    //return this.catalogService.fetchProducts().subscribe();
+  //}
 
   get total() {
     return this.basketService.total();
@@ -34,12 +40,13 @@ export class App {
     return this.basketService.count();
   }
 
-  updateTotal(product: Product) {
-    this.basketService.addItem(product);
-    this.catalogService.decreaseStock(product.id);
+  updateTotal(productId: string) {
+    this.basketService.addItem(productId).subscribe(
+      () => this.catalogService.decreaseStock(productId)
+    );
   }
 
-  hasProductsInStock(): Signal<boolean> {
+  hasProductsInStock(): Signal<boolean | undefined> {
     return this.catalogService.hasProductsInStock;
   }
 }

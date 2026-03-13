@@ -1,18 +1,22 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { APP_TITLE } from './app.token';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, DEFAULT_CURRENCY_CODE, LOCALE_ID } from '@angular/core';
+import { appTitleProvider } from './app.token';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 
-const ValueProvider = {
-  provide: APP_TITLE,
-  useValue: 'Bienvenue sur Zenika Ecommerce',
-};
+import { registerLocaleData } from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
+import { provideHttpClient, withFetch } from '@angular/common/http';
+
+registerLocaleData(localeFr, 'fr');
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    ValueProvider
+    appTitleProvider,
+    { provide: LOCALE_ID, useValue: "fr" },
+    { provide: DEFAULT_CURRENCY_CODE, useValue: "EUR" },
+    provideHttpClient(withFetch())
   ]
 };
